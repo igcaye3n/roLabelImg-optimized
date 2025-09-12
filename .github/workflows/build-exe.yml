@@ -26,7 +26,7 @@ jobs:
     
     - name: Build EXE
       run: |
-        pyinstaller --onefile --windowed --name=roLabelImg --add-data="icons;icons" --add-data="data;data" --add-data="libs;libs" --add-data="resources.py;." --hidden-import=PyQt5 --hidden-import=lxml --hidden-import=resources roLabelImg.py
+        pyinstaller --onefile --windowed --name=roLabelImg --add-data="icons;icons" --add-data="data;data" --add-data="libs;libs" --add-data="resources.py;." --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=lxml --hidden-import=lxml.etree --hidden-import=xml.etree --hidden-import=xml.etree.ElementTree --hidden-import=resources roLabelImg.py
     
     - name: Upload EXE
       uses: actions/upload-artifact@v4

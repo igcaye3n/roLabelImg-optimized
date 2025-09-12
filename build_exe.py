@@ -41,6 +41,8 @@ def build_exe():
         '--hidden-import=PyQt5.QtWidgets',
         '--hidden-import=lxml',
         '--hidden-import=lxml.etree',
+        '--hidden-import=xml.etree',
+        '--hidden-import=xml.etree.ElementTree',
         'roLabelImg.py'
     ]
     
@@ -92,6 +94,8 @@ a = Analysis(
         'PyQt5.QtWidgets',
         'lxml',
         'lxml.etree',
+        'xml.etree',
+        'xml.etree.ElementTree',
         'resources',
     ],
     hookspath=[],
