@@ -475,6 +475,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.actions.advancedMode.setChecked(True)
             self.toggleAdvancedMode()
 
+
         # 从设置中恢复边界限制状态，默认为False（边界限制已禁用）
         boundaryConstraintEnabled = not xbool(settings.get('boundaryConstraint', True))  # 注意：canOutOfBounding与设置值相反
         self.canvas.canOutOfBounding = boundaryConstraintEnabled

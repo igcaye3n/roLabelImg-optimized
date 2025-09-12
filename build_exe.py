@@ -33,7 +33,9 @@ def build_exe():
         '--icon=icons/app.ico' if os.path.exists('icons/app.ico') else '',  # 图标
         '--add-data=icons:icons',  # 包含图标文件夹
         '--add-data=data:data',  # 包含数据文件夹
+        '--add-data=resources.py:.',  # 包含resources.py文件
         '--hidden-import=PyQt5',
+        '--hidden-import=resources',
         '--hidden-import=PyQt5.QtCore',
         '--hidden-import=PyQt5.QtGui', 
         '--hidden-import=PyQt5.QtWidgets',
@@ -81,6 +83,7 @@ a = Analysis(
         ('icons', 'icons'),
         ('data', 'data'),
         ('libs', 'libs'),
+        ('resources.py', '.'),
     ],
     hiddenimports=[
         'PyQt5',
@@ -89,6 +92,7 @@ a = Analysis(
         'PyQt5.QtWidgets',
         'lxml',
         'lxml.etree',
+        'resources',
     ],
     hookspath=[],
     hooksconfig={},
