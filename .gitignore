@@ -1,0 +1,13 @@
+*.pyc
+*/__pycache__
+.vscode
+__pycache__
+*.DS_Store
+labelImg.py 
+roLabelImg.py.bak
+CONTRIBUTING.rst
+LICENSEdist/
+build/
+__pycache__/
+*.pyc
+*.spec
