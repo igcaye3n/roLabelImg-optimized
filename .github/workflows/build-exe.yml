@@ -34,22 +34,7 @@ jobs:
         
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed ^
-          --name=roLabelImg ^
-          --add-data="icons;icons" ^
-          --add-data="data;data" ^
-          --add-data="libs;libs" ^
-          --add-data="resources.py;." ^
-          --hidden-import=PyQt5 ^
-          --hidden-import=PyQt5.QtCore ^
-          --hidden-import=PyQt5.QtGui ^
-          --hidden-import=PyQt5.QtWidgets ^
-          --hidden-import=lxml ^
-          --hidden-import=lxml.etree ^
-          --hidden-import=xml.etree ^
-          --hidden-import=xml.etree.ElementTree ^
-          --hidden-import=resources ^
-          roLabelImg.py
+        pyinstaller --onefile --windowed --name=roLabelImg --add-data="icons;icons" --add-data="data;data" --add-data="libs;libs" --add-data="resources.py;." --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=lxml --hidden-import=lxml.etree --hidden-import=xml.etree --hidden-import=xml.etree.ElementTree --hidden-import=resources roLabelImg.py
           
     - name: Test executable
       run: |
@@ -137,72 +122,68 @@ jobs:
         
     - name: Create optimized spec file
       run: |
-        python -c "
-import os
-spec_content = '''# -*- mode: python ; coding: utf-8 -*-
-
-a = Analysis(
-    ['roLabelImg.py'],
-    pathex=[],
-    binaries=[],
-    datas=[
-        ('icons', 'icons'),
-        ('data', 'data'),
-        ('libs', 'libs'),
-        ('resources.py', '.'),
-    ],
-    hiddenimports=[
-        'PyQt5',
-        'PyQt5.QtCore',
-        'PyQt5.QtGui', 
-        'PyQt5.QtWidgets',
-        'lxml',
-        'lxml.etree',
-        'xml.etree',
-        'xml.etree.ElementTree',
-        'resources',
-    ],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[
-        'tkinter',
-        'matplotlib',
-        'numpy',
-        'scipy',
-        'IPython',
-        'tornado',
-    ],
-    noarchive=False,
-)
-
-pyz = PYZ(a.pure, a.zipped_data, cipher=None)
-
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    [],
-    name='roLabelImg-optimized',
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
-'''
-with open('roLabelImg-optimized.spec', 'w', encoding='utf-8') as f:
-    f.write(spec_content)
-print('✅ Created optimized spec file')
-        "
+        cat > roLabelImg-optimized.spec << 'EOF'
+        # -*- mode: python ; coding: utf-8 -*-
+        
+        a = Analysis(
+            ['roLabelImg.py'],
+            pathex=[],
+            binaries=[],
+            datas=[
+                ('icons', 'icons'),
+                ('data', 'data'),
+                ('libs', 'libs'),
+                ('resources.py', '.'),
+            ],
+            hiddenimports=[
+                'PyQt5',
+                'PyQt5.QtCore',
+                'PyQt5.QtGui', 
+                'PyQt5.QtWidgets',
+                'lxml',
+                'lxml.etree',
+                'xml.etree',
+                'xml.etree.ElementTree',
+                'resources',
+            ],
+            hookspath=[],
+            hooksconfig={},
+            runtime_hooks=[],
+            excludes=[
+                'tkinter',
+                'matplotlib',
+                'numpy',
+                'scipy',
+                'IPython',
+                'tornado',
+            ],
+            noarchive=False,
+        )
+        
+        pyz = PYZ(a.pure, a.zipped_data, cipher=None)
+        
+        exe = EXE(
+            pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            [],
+            name='roLabelImg-optimized',
+            debug=False,
+            bootloader_ignore_signals=False,
+            strip=False,
+            upx=True,
+            upx_exclude=[],
+            runtime_tmpdir=None,
+            console=False,
+            disable_windowed_traceback=False,
+            target_arch=None,
+            codesign_identity=None,
+            entitlements_file=None,
+        )
+        EOF
+        echo "✅ Created optimized spec file"
         
     - name: Build with spec file
       run: pyinstaller roLabelImg-optimized.spec
