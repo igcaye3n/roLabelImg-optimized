@@ -3,6 +3,7 @@ name: Build Windows EXE
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:  # 允许手动触发
@@ -12,24 +13,203 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-    
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install PyQt5 lxml pyinstaller
-    
-    - name: Build EXE
+        pip install -r requirements.txt || echo "No requirements.txt found"
+        
+    - name: Test application
       run: |
-        pyinstaller --onefile --windowed --name=roLabelImg --add-data="icons;icons" --add-data="data;data" --add-data="libs;libs" --add-data="resources.py;." --hidden-import=PyQt5 --hidden-import=PyQt5.QtCore --hidden-import=PyQt5.QtGui --hidden-import=PyQt5.QtWidgets --hidden-import=lxml --hidden-import=lxml.etree --hidden-import=xml.etree --hidden-import=xml.etree.ElementTree --hidden-import=resources roLabelImg.py
-    
-    - name: Upload EXE
+        python -c "import PyQt5; print('PyQt5 imported successfully')"
+        python -c "import lxml; print('lxml imported successfully')"
+        
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --onefile --windowed ^
+          --name=roLabelImg ^
+          --add-data="icons;icons" ^
+          --add-data="data;data" ^
+          --add-data="libs;libs" ^
+          --add-data="resources.py;." ^
+          --hidden-import=PyQt5 ^
+          --hidden-import=PyQt5.QtCore ^
+          --hidden-import=PyQt5.QtGui ^
+          --hidden-import=PyQt5.QtWidgets ^
+          --hidden-import=lxml ^
+          --hidden-import=lxml.etree ^
+          --hidden-import=xml.etree ^
+          --hidden-import=xml.etree.ElementTree ^
+          --hidden-import=resources ^
+          roLabelImg.py
+          
+    - name: Test executable
+      run: |
+        if (Test-Path "dist/roLabelImg.exe") {
+          echo "✅ Executable created successfully"
+          $size = (Get-Item "dist/roLabelImg.exe").length / 1MB
+          echo "File size: $([math]::Round($size, 2)) MB"
+        } else {
+          echo "❌ Executable not found"
+          exit 1
+        }
+        
+    - name: Create release package
+      run: |
+        mkdir release
+        copy dist/roLabelImg.exe release/
+        copy README.rst release/README.txt
+        copy HISTORY.rst release/CHANGELOG.txt
+        copy data/predefined_classes.txt release/
+        echo "roLabelImg Windows Executable" > release/VERSION.txt
+        echo "Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" >> release/VERSION.txt
+        echo "Boundary constraints have been optimized for better user experience." >> release/VERSION.txt
+        
+    - name: Upload executable as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: roLabelImg-Windows-EXE
-        path: dist/roLabelImg.exe
+        name: roLabelImg-Windows-exe
+        path: release/
+        retention-days: 30
+        
+    - name: Create Release (on tag)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/roLabelImg.exe
+          release/*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        name: roLabelImg ${{ github.ref_name }}
+        body: |
+          ## roLabelImg Windows 可执行文件
+          
+          ### 🎉 新功能
+          - ✅ 已解除边界限制，标注框可以超出图像边界
+          - ✅ 优化了中心点在边界时的大小调整功能
+          - ✅ 支持普通矩形和旋转矩形的完全自由操作
+          
+          ### 📦 文件说明
+          - `roLabelImg.exe` - Windows可执行文件（无需安装Python）
+          - `predefined_classes.txt` - 预定义类别文件
+          - `README.txt` - 使用说明
+          - `CHANGELOG.txt` - 更新历史
+          
+          ### 🚀 使用方法
+          1. 下载 `roLabelImg.exe`
+          2. 双击运行即可使用
+          3. 无需安装任何依赖
+          
+          ### 🎯 快捷键
+          - `Ctrl+B` - 切换边界限制
+          - `O` - 快速切换边界限制
+          - `W` - 创建普通矩形
+          - `E` - 创建旋转矩形
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-spec-version:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyQt5 lxml pyinstaller
+        
+    - name: Create optimized spec file
+      run: |
+        python -c "
+import os
+spec_content = '''# -*- mode: python ; coding: utf-8 -*-
+
+a = Analysis(
+    ['roLabelImg.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        ('icons', 'icons'),
+        ('data', 'data'),
+        ('libs', 'libs'),
+        ('resources.py', '.'),
+    ],
+    hiddenimports=[
+        'PyQt5',
+        'PyQt5.QtCore',
+        'PyQt5.QtGui', 
+        'PyQt5.QtWidgets',
+        'lxml',
+        'lxml.etree',
+        'xml.etree',
+        'xml.etree.ElementTree',
+        'resources',
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[
+        'tkinter',
+        'matplotlib',
+        'numpy',
+        'scipy',
+        'IPython',
+        'tornado',
+    ],
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=None)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='roLabelImg-optimized',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+'''
+with open('roLabelImg-optimized.spec', 'w', encoding='utf-8') as f:
+    f.write(spec_content)
+print('✅ Created optimized spec file')
+        "
+        
+    - name: Build with spec file
+      run: pyinstaller roLabelImg-optimized.spec
+      
+    - name: Upload optimized executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: roLabelImg-Windows-exe-optimized
+        path: dist/roLabelImg-optimized.exe
+        retention-days: 30

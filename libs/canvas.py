@@ -71,7 +71,7 @@ class Canvas(QWidget):
         self.canDrawRotatedRect = True
         self.hideRotated = False
         self.hideNormal = False
-        self.canOutOfBounding = True
+        self.canOutOfBounding = True  # 强制允许超出边界
         self.showCenter = False
 
     def enterEvent(self, ev):
@@ -368,14 +368,30 @@ class Canvas(QWidget):
                 rindex = (index + 3) % 4
                 shape[lindex] = p2
                 shape[rindex] = p4
-            
-            shape.close()
-            
-            # calculate the height and weight, and show it
-            if shape.isRotated:
+                
+                # calculate the height and weight, and show it for rotated shapes
                 w = math.sqrt((p4.x()-p3.x()) ** 2 + (p4.y()-p3.y()) ** 2)
                 h = math.sqrt((p3.x()-p2.x()) ** 2 + (p3.y()-p2.y()) ** 2)
                 self.status.emit("width is %d, height is %d." % (w,h))
+            else:
+                # 对于普通矩形，重新计算所有顶点以保持矩形形状
+                sindex = (index + 2) % 4
+                opposite_point = shape[sindex]
+                
+                # 根据拖拽顶点和对角顶点重建矩形
+                min_x = min(pos.x(), opposite_point.x())
+                max_x = max(pos.x(), opposite_point.x())
+                min_y = min(pos.y(), opposite_point.y())
+                max_y = max(pos.y(), opposite_point.y())
+                
+                # 重新设置所有四个顶点 (左上、右上、右下、左下)
+                shape[0] = QPointF(min_x, min_y)  # 左上
+                shape[1] = QPointF(max_x, min_y)  # 右上  
+                shape[2] = QPointF(max_x, max_y)  # 右下
+                shape[3] = QPointF(min_x, max_y)  # 左下
+                
+            
+            shape.close()
             return
 
         # 边界限制启用时的原有逻辑

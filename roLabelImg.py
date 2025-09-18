@@ -476,10 +476,13 @@ class MainWindow(QMainWindow, WindowMixin):
             self.toggleAdvancedMode()
 
 
-        # 从设置中恢复边界限制状态，默认为False（边界限制已禁用）
-        boundaryConstraintEnabled = not xbool(settings.get('boundaryConstraint', True))  # 注意：canOutOfBounding与设置值相反
-        self.canvas.canOutOfBounding = boundaryConstraintEnabled
-        self.actions.toggleBoundary.setChecked(not boundaryConstraintEnabled)
+        # 强制禁用边界限制，确保标注框可以超出边界
+        boundaryConstraintEnabled = False  # 强制设为False，确保边界限制被禁用
+        self.canvas.canOutOfBounding = True  # 强制允许超出边界
+        self.actions.toggleBoundary.setChecked(boundaryConstraintEnabled)
+        
+        # 显示当前边界限制状态
+        self.statusBar().showMessage(f"边界限制状态: 已禁用 (canOutOfBounding={self.canvas.canOutOfBounding})", 3000)
 
         # Populate the File menu dynamically.
         self.updateFileMenu()
@@ -1013,7 +1016,7 @@ class MainWindow(QMainWindow, WindowMixin):
         s['fill/color'] = self.fillColor
         s['recentFiles'] = self.recentFiles
         s['advanced'] = not self._beginner
-        s['boundaryConstraint'] = not self.canvas.canOutOfBounding  # 保存边界限制状态
+        s['boundaryConstraint'] = not self.canvas.canOutOfBounding  # 保存边界限制状态（与canOutOfBounding相反）
         if self.defaultSaveDir is not None and len(self.defaultSaveDir) > 1:
             s['savedir'] = ustr(self.defaultSaveDir)
         else:
