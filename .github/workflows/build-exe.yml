@@ -122,7 +122,7 @@ jobs:
         
     - name: Create optimized spec file
       run: |
-        cat > roLabelImg-optimized.spec << 'EOF'
+        $specContent = @"
         # -*- mode: python ; coding: utf-8 -*-
         
         a = Analysis(
@@ -182,7 +182,8 @@ jobs:
             codesign_identity=None,
             entitlements_file=None,
         )
-        EOF
+        "@
+        $specContent | Out-File -FilePath "roLabelImg-optimized.spec" -Encoding UTF8
         echo "✅ Created optimized spec file"
         
     - name: Build with spec file
